@@ -1,0 +1,15 @@
+{
+  "name": "foundry-helper",
+  "version": "1.0.0",
+  "description": "Privileged helper daemon for Foundry VTT Docker management panels",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "yauzl": "^3.1.3",
+    "yaml": "^2.5.1"
+  }
+}

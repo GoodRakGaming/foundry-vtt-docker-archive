@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Foundry — панель ДМ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #09090b;
+    --surface: rgba(255,255,255,0.035);
+    --surface-solid: #111318;
+    --border: rgba(255,255,255,0.09);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #fafafa;
+    --text-muted: #9aa4b2;
+    --primary: #0C5CAB;
+    --primary-hover: #1568c4;
+    --primary-soft: rgba(12,92,171,0.16);
+    --primary-border: rgba(76,151,224,0.4);
+    --success: #10b981;
+    --success-soft: rgba(16,185,129,0.15);
+    --success-border: rgba(16,185,129,0.4);
+    --danger: #ef4444;
+    --danger-soft: rgba(239,68,68,0.15);
+    --danger-border: rgba(239,68,68,0.4);
+    --warning: #f59e0b;
+    --warning-soft: rgba(245,158,11,0.15);
+    --warning-border: rgba(245,158,11,0.4);
+    --radius-sm: 6px;
+    --radius-md: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background:
+      radial-gradient(900px 480px at 15% -10%, rgba(12,92,171,0.16), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary-border); }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+  }
+  .topbar-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+    flex: none;
+  }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 28px rgba(0,0,0,0.28);
+  }
+
+  h2 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin: 0 0 1rem;
+  }
+  .panel + .panel h2 { margin-top: 0; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 0.6rem 0.6rem; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  #instances-table th:nth-child(1), #instances-table td:nth-child(1) { width: 4.5rem; }
+  #instances-table th:nth-child(2), #instances-table td:nth-child(2) { width: 4.5rem; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+  }
+  .badge.active { background: var(--primary-soft); color: #8ec2ff; border-color: var(--primary-border); }
+  .badge.alive { background: var(--success-soft); color: #6ee7b7; border-color: var(--success-border); }
+  .badge.dead { background: var(--danger-soft); color: #fca5a5; border-color: var(--danger-border); }
+  .badge.blocked { background: var(--warning-soft); color: #fcd34d; border-color: var(--warning-border); }
+
+  /* Wrapper containers around table-cell badges/buttons so they wrap onto
+     new lines with a consistent gap instead of the browser's default inline
+     text-flow spacing, which produced ragged, uneven-looking rows. */
+  .badge-group { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+  .btn-group { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; justify-content: flex-end; }
+  .btn-group button { margin-right: 0; }
+
+  button {
+    background: var(--surface-solid);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    margin-right: 0.4rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  button:hover { background: #1b1f27; border-color: rgba(255,255,255,0.24); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  button.danger { color: #fca5a5; border-color: var(--danger-border); }
+  button.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+  button.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 500; }
+  button.btn-primary:hover { background: var(--primary-hover); }
+
+  select, input[type=text] {
+    background: var(--surface-solid);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+
+  .field-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.9rem 1rem;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    min-width: 10rem;
+  }
+  .field select, .field input { width: 100%; }
+  .field-grid .arrow { color: var(--text-muted); padding-bottom: 0.5rem; }
+  .field-grid button { white-space: nowrap; margin-bottom: 1px; margin-right: 0; }
+
+  .msg {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-sm);
+    white-space: pre-wrap;
+    display: none;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+  }
+  .msg.ok { display: block; background: var(--success-soft); color: #6ee7b7; border-color: var(--success-border); }
+  .msg.err { display: block; background: var(--danger-soft); color: #fca5a5; border-color: var(--danger-border); }
+
+  .hint { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.6rem; }
+
+  .field-warning {
+    display: none;
+    margin-top: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    background: var(--warning-soft);
+    color: #fcd34d;
+    border: 1px solid var(--warning-border);
+  }
+  .field-warning.show { display: block; }
+
+  .spinner {
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    margin-right: 0.45em;
+    vertical-align: -0.15em;
+    animation: spin 0.7s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="topbar-dot"></span>
+    <h1>Foundry VTT — панель ДМ</h1>
+  </div>
+
+  <section class="panel">
+    <h2>Версии</h2>
+    <table id="instances-table">
+      <thead><tr><th>Версия</th><th>Порт</th><th>Статус</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="msg" id="instances-msg"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Перенос мира</h2>
+    <div class="field-grid">
+      <label class="field">Источник<select id="src"></select></label>
+      <span class="arrow">→</span>
+      <label class="field">Назначение<select id="dst"></select></label>
+      <label class="field">Мир<select id="world-name" disabled><option value="" selected disabled>— сначала источник —</option></select></label>
+      <button id="copy-world-btn" class="btn-primary">Скопировать мир + систему</button>
+    </div>
+    <div class="hint">Не трогает источник, не требует пустого назначения — копирует только выбранный мир (+ его систему, если её ещё нет). Безопасно, если этот мир сейчас не открыт в источнике. Массовое копирование всех модулей и полная миграция всего тома — в админ-панели.</div>
+    <div class="field-warning" id="world-exists-warning"></div>
+    <div class="msg" id="world-msg"></div>
+  </section>
+
+<script>
+// Each actionable section gets its own message slot right under its own
+// controls, instead of one shared div at the very bottom of the page —
+// an error near the top used to render far below the fold where it was
+// easy to miss.
+function makeMsg(elId) {
+  const el = document.getElementById(elId);
+  return {
+    show(text, ok) {
+      el.textContent = text;
+      el.className = 'msg ' + (ok ? 'ok' : 'err');
+    },
+    hide() { el.className = 'msg'; },
+  };
+}
+
+const instancesMsg = makeMsg('instances-msg');
+const worldMsg = makeMsg('world-msg');
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await res.json();
+  return json;
+}
+
+// Wraps a button click so the button itself shows it's working (spinner +
+// disabled) instead of just going quiet until the request resolves — this
+// mattered most for start/stop/switch, which used to give zero feedback
+// while docker was doing its thing.
+async function withBusy(btn, busyText, fn) {
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span>${busyText}`;
+  try {
+    return await fn();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+async function load() {
+  const [instRes, stateRes] = await Promise.all([api('GET', '/api/instances'), api('GET', '/api/state')]);
+  if (!instRes.ok) { instancesMsg.show('Ошибка загрузки списка версий: ' + instRes.error, false); return; }
+  const active = stateRes.ok ? stateRes.data.active : null;
+  const instances = instRes.data.instances;
+
+  const healths = await Promise.all(instances.map((i) => api('GET', '/api/health/' + i.name)));
+
+  const tbody = document.querySelector('#instances-table tbody');
+  tbody.innerHTML = '';
+  instances.forEach((inst, idx) => {
+    const alive = healths[idx].ok && healths[idx].data.alive;
+    const isActive = inst.name === active;
+    const tr = document.createElement('tr');
+
+    const badges = [];
+    if (isActive) badges.push('<span class="badge active">активна</span>');
+    badges.push(alive ? '<span class="badge alive">жива</span>' : '<span class="badge dead">не отвечает</span>');
+    if (inst.upgrade_blocked) badges.push('<span class="badge blocked">upgrade заблокирован</span>');
+
+    tr.innerHTML = `
+      <td>${inst.name}</td>
+      <td>${inst.port}</td>
+      <td><div class="badge-group">${badges.join('')}</div></td>
+      <td><div class="btn-group"></div></td>
+    `;
+    const actionsTd = tr.querySelector('td:last-child .btn-group');
+
+    const switchBtn = document.createElement('button');
+    switchBtn.textContent = 'Сделать активной';
+    switchBtn.disabled = isActive || !alive;
+    switchBtn.onclick = () => doSwitch(switchBtn, inst.name);
+    actionsTd.appendChild(switchBtn);
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = alive ? 'Остановить' : 'Запустить';
+    if (alive && isActive) toggleBtn.classList.add('danger');
+    toggleBtn.onclick = () => doToggle(toggleBtn, inst.name, alive, isActive);
+    actionsTd.appendChild(toggleBtn);
+
+    tbody.appendChild(tr);
+  });
+
+  // Preserve whatever the DM already picked across this periodic refresh —
+  // rebuilding the options used to always reset the selection back to the
+  // placeholder, which is just annoying on its own but would actively
+  // orphan the dependent world dropdown below.
+  const placeholder = '<option value="" selected disabled>— выберите —</option>';
+  const options = placeholder + instances.map((i) => `<option value="${i.name}">${i.name}</option>`).join('');
+  for (const id of ['src', 'dst']) {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = options;
+    if (prev && instances.some((i) => i.name === prev)) sel.value = prev;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// The world select is populated from the chosen source instance instead of
+// typed by hand — a typo'd world name used to fail deep into the copy
+// instead of up front, and this also means the DM never has to remember
+// exact folder names.
+async function refreshWorldOptions() {
+  const worldSel = document.getElementById('world-name');
+  document.getElementById('world-exists-warning').classList.remove('show');
+  const src = document.getElementById('src').value;
+  if (!src) {
+    worldSel.innerHTML = '<option value="" selected disabled>— сначала источник —</option>';
+    worldSel.disabled = true;
+    return;
+  }
+  worldSel.disabled = true;
+  worldSel.innerHTML = '<option value="" selected disabled>загрузка...</option>';
+  const r = await api('GET', '/api/worlds/' + src);
+  if (!r.ok) {
+    worldSel.innerHTML = '<option value="" selected disabled>ошибка загрузки</option>';
+    return;
+  }
+  const worlds = r.data.worlds;
+  if (!worlds.length) {
+    worldSel.innerHTML = '<option value="" selected disabled>миров нет</option>';
+    return;
+  }
+  worldSel.innerHTML = '<option value="" selected disabled>— выберите мир —</option>' +
+    worlds.map((w) => `<option value="${escapeHtml(w.name)}">${w.title ? escapeHtml(w.title) + ' (' + escapeHtml(w.name) + ')' : escapeHtml(w.name)}</option>`).join('');
+  worldSel.disabled = false;
+}
+
+document.getElementById('src').addEventListener('change', refreshWorldOptions);
+
+// copy-world never overwrites — a world already present at the
+// destination is silently skipped (copied:false) — so warn up front
+// instead of letting the DM click "copy" and get a no-op that looks like
+// nothing happened.
+async function checkWorldExistsInDst() {
+  const warnEl = document.getElementById('world-exists-warning');
+  const dst = document.getElementById('dst').value;
+  const worldName = document.getElementById('world-name').value;
+  if (!dst || !worldName) { warnEl.classList.remove('show'); return; }
+
+  const r = await api('GET', '/api/worlds/' + dst);
+  if (!r.ok) { warnEl.classList.remove('show'); return; }
+  const exists = r.data.worlds.some((w) => w.name === worldName);
+  if (exists) {
+    warnEl.textContent = `⚠ Мир «${worldName}» уже есть в ${dst} — копирование будет пропущено (файлы не перезаписываются). Выберите другой мир, если хотели перенести другой контент.`;
+    warnEl.classList.add('show');
+  } else {
+    warnEl.classList.remove('show');
+  }
+}
+
+document.getElementById('dst').addEventListener('change', checkWorldExistsInDst);
+document.getElementById('world-name').addEventListener('change', checkWorldExistsInDst);
+
+async function doSwitch(btn, name) {
+  await withBusy(btn, 'Переключаю...', async () => {
+    const r = await api('POST', '/api/switch', { name });
+    instancesMsg.show(r.ok ? `Активная версия переключена на ${name}` : 'Ошибка переключения: ' + r.error, r.ok);
+  });
+  load();
+}
+
+async function doToggle(btn, name, alive, isActive) {
+  if (alive && isActive) {
+    if (!confirm(`«${name}» сейчас активна — игроки получат 502 после остановки. Продолжить?`)) return;
+  }
+  await withBusy(btn, alive ? 'Останавливаю...' : 'Запускаю...', async () => {
+    const r = await api('POST', (alive ? '/api/stop/' : '/api/start/') + name);
+    instancesMsg.show(r.ok ? `${name}: ${alive ? 'остановлена' : 'запущена'}` : 'Ошибка: ' + r.error, r.ok);
+  });
+  load();
+}
+
+const copyWorldBtn = document.getElementById('copy-world-btn');
+copyWorldBtn.onclick = async () => {
+  const src = document.getElementById('src').value;
+  const dst = document.getElementById('dst').value;
+  const worldName = document.getElementById('world-name').value.trim();
+  if (!src || !dst) { worldMsg.show('Выберите источник и назначение', false); return; }
+  if (!worldName) { worldMsg.show('Укажите имя мира', false); return; }
+  if (src === dst) { worldMsg.show('Источник и назначение должны различаться', false); return; }
+  await withBusy(copyWorldBtn, 'Копирую...', async () => {
+    worldMsg.show(`Копирую мир «${worldName}» и его систему из ${src} в ${dst}...`, true);
+    const r = await api('POST', '/api/copy-world', { src, dst, worldName });
+    if (!r.ok) { worldMsg.show('Ошибка: ' + r.error, false); return; }
+    const parts = [`Мир «${worldName}»: ${r.data.copied ? 'скопирован' : 'уже был в назначении'}`];
+    if (r.data.system) parts.push(`система «${r.data.system}»: ${r.data.systemResult && r.data.systemResult.copied ? 'скопирована' : 'уже была'}`);
+    if (r.data.restarted) parts.push(`${dst} перезапущена, чтобы Foundry увидел скопированное`);
+    else if (r.data.restartError) parts.push(`⚠ не удалось автоматически перезапустить ${dst} (${r.data.restartError}) — перезапустите вручную, иначе Foundry не увидит изменения`);
+    worldMsg.show(parts.join('; ') + (r.data.systemWarning ? '\n\n⚠ ' + r.data.systemWarning : ''), true);
+  });
+};
+
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+version: "3.9"
+
+services:
+  {
+    foundry-v13:
+      {
+        image: node:22-bullseye-slim,
+        restart: unless-stopped,
+        user: 1000:1000,
+        working_dir: /app,
+        command: [ node, resources/app/main.js, --dataPath=/data, --port=30013 ],
+        volumes:
+          [
+            /opt/foundry/apps/v13:/app:rw,
+            /opt/foundry/data/v13:/data:rw,
+            { type: bind, source: /opt/foundry/shared-assets/art, target: /data/Data/art },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/assets,
+                target: /data/Data/assets
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/docs,
+                target: /data/Data/docs
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/icons,
+                target: /data/Data/icons
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/items,
+                target: /data/Data/items
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/maps,
+                target: /data/Data/maps
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/misc,
+                target: /data/Data/misc
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/monsters,
+                target: /data/Data/monsters
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/music,
+                target: /data/Data/music
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/portraits,
+                target: /data/Data/portraits
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/props,
+                target: /data/Data/props
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/tokenizer,
+                target: /data/Data/tokenizer
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/tokens,
+                target: /data/Data/tokens
+              }
+          ],
+        ports: [ 127.0.0.1:30013:30013 ],
+        environment: [ NODE_ENV=production ]
+      },
+    panel-dm:
+      {
+        build: ./panel-dm,
+        restart: unless-stopped,
+        volumes: [ /run/foundry-helper-dm:/run/foundry-helper-dm:rw ],
+        ports: [ 127.0.0.1:8099:8099 ],
+        environment: [ NODE_ENV=production, PORT=8099 ]
+      },
+    panel-admin:
+      {
+        build: ./panel-admin,
+        restart: unless-stopped,
+        volumes:
+          [
+            /run/foundry-helper-admin:/run/foundry-helper-admin:rw,
+            /opt/foundry/_uploads:/uploads:rw
+          ],
+        environment: [ NODE_ENV=production, PORT=8100 ],
+        networks: { wg-easy_default: { ipv4_address: 172.19.0.10 } }
+      },
+    foundry-v14:
+      {
+        image: node:24-bullseye-slim,
+        restart: unless-stopped,
+        user: 1000:1000,
+        working_dir: /app,
+        command: [ node, resources/app/main.js, --dataPath=/data, --port=30014 ],
+        volumes:
+          [
+            /opt/foundry/apps/v14:/app:rw,
+            /opt/foundry/data/v14:/data:rw,
+            { type: bind, source: /opt/foundry/shared-assets/art, target: /data/Data/art },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/assets,
+                target: /data/Data/assets
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/docs,
+                target: /data/Data/docs
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/icons,
+                target: /data/Data/icons
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/items,
+                target: /data/Data/items
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/maps,
+                target: /data/Data/maps
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/misc,
+                target: /data/Data/misc
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/monsters,
+                target: /data/Data/monsters
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/music,
+                target: /data/Data/music
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/portraits,
+                target: /data/Data/portraits
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/props,
+                target: /data/Data/props
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/tokenizer,
+                target: /data/Data/tokenizer
+              },
+            {
+                type: bind,
+                source: /opt/foundry/shared-assets/tokens,
+                target: /data/Data/tokens
+              }
+          ],
+        ports: [ 127.0.0.1:30014:30014 ],
+        environment: [ NODE_ENV=production ]
+      }
+  }
+networks:
+  wg-easy_default:
+    external: true
+    name: wg-easy_default
+
+# Foundry version services (foundry-v13, foundry-v14, ...) are appended here
+# by the helper daemon's `deploy` operation (see helper/lib/compose.js).
+# Do not hand-edit service entries -- the registry (registry.sqlite) is the
+# source of truth; this file is a rendered artifact of it, same as
+# foundry-active.conf is for nginx.

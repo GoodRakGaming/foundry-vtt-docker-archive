@@ -1,0 +1,4 @@
+# managed by foundry-helper — generated from registry.sqlite, do not edit by hand
+upstream foundry_active {
+    server 127.0.0.1:30014;
+}
